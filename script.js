@@ -1,9 +1,4 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // Inicializar la aplicación
-    initApp();
-});
-
-function initApp() {
     // Cargar inventario al iniciar
     loadInventory();
     updateFinancialSummary();
@@ -11,15 +6,28 @@ function initApp() {
     // Configurar eventos
     setupEventListeners();
     
-    // Proteger datos al recargar
-    window.addEventListener('beforeunload', function(e) {
-        // No es necesario hacer nada, localStorage persiste
-    });
-}
+    // Mostrar sección activa
+    showSection('inventory');
+});
 
 function setupEventListeners() {
+    // Navegación de la barra lateral
+    document.querySelectorAll('.sidebar li').forEach(item => {
+        item.addEventListener('click', function() {
+            const section = this.getAttribute('data-section');
+            showSection(section);
+            
+            // Actualizar clase activa
+            document.querySelectorAll('.sidebar li').forEach(li => {
+                li.classList.remove('active');
+            });
+            this.classList.add('active');
+        });
+    });
+    
     // Formulario de producto
-    document.getElementById('productForm').addEventListener('submit', function(e) {
+    const productForm = document.getElementById('productForm');
+    productForm.addEventListener('submit', function(e) {
         e.preventDefault();
         addProduct();
     });
@@ -49,6 +57,43 @@ function setupEventListeners() {
             searchProduct();
         }
     });
+    
+    // Generar reporte
+    document.getElementById('generateReport').addEventListener('click', generateSalesReport);
+    
+    // Configuración - Copia de seguridad
+    document.getElementById('exportBackup').addEventListener('click', exportBackup);
+    document.getElementById('importBackup').addEventListener('click', () => {
+        document.getElementById('backupFile').click();
+    });
+    document.getElementById('backupFile').addEventListener('change', importBackup);
+    document.getElementById('clearData').addEventListener('click', confirmClearData);
+}
+
+function showSection(sectionId) {
+    // Ocultar todas las secciones
+    document.querySelectorAll('.section').forEach(section => {
+        section.classList.remove('active');
+    });
+    
+    // Mostrar la sección seleccionada
+    document.getElementById(`${sectionId}-section`).classList.add('active');
+    
+    // Actualizar el título del encabezado
+    const headerTitle = document.querySelector('header h1');
+    switch(sectionId) {
+        case 'inventory':
+            headerTitle.innerHTML = '<i class="fas fa-box-open"></i> Gestión de Inventario';
+            break;
+        case 'reports':
+            headerTitle.innerHTML = '<i class="fas fa-chart-line"></i> Reportes de Ventas';
+            loadSalesData();
+            break;
+        case 'settings':
+            headerTitle.innerHTML = '<i class="fas fa-cog"></i> Configuración del Sistema';
+            loadSettings();
+            break;
+    }
 }
 
 function addProduct() {
@@ -353,135 +398,6 @@ function exportToExcel() {
     showAlert('Exportación a Excel completada', 'success');
 }
 
-function getInventory() {
-    return JSON.parse(localStorage.getItem('inventory')) || [];
-}
-
-function saveInventory(inventory) {
-    localStorage.setItem('inventory', JSON.stringify(inventory));
-}
-
-function resetForm() {
-    document.getElementById('productForm').reset();
-    document.getElementById('imagePreview').innerHTML = '';
-    document.getElementById('productName').focus();
-}
-
-function showAlert(message, type) {
-    // Implementación básica de alerta
-    alert(`${type.toUpperCase()}: ${message}`);
-}
-
-// Protección contra eliminación accidental
-window.addEventListener('storage', function(e) {
-    if (e.key === 'inventory' && !confirm('Se detectaron cambios en el inventario desde otra pestaña. ¿Deseas recargar los datos?')) {
-        // Restaurar el inventario anterior
-        localStorage.setItem('inventory', e.oldValue);
-    }
-    loadInventory();
-});
-document.addEventListener('DOMContentLoaded', function() {
-    // Inicializar la aplicación
-    initApp();
-});
-
-function initApp() {
-    // Cargar inventario al iniciar
-    loadInventory();
-    updateFinancialSummary();
-    
-    // Configurar eventos
-    setupEventListeners();
-    
-    // Mostrar sección activa
-    showSection('inventory');
-}
-
-function setupEventListeners() {
-    // Navegación de la barra lateral
-    document.querySelectorAll('.sidebar li').forEach(item => {
-        item.addEventListener('click', function() {
-            const section = this.getAttribute('data-section');
-            showSection(section);
-            
-            // Actualizar clase activa
-            document.querySelectorAll('.sidebar li').forEach(li => {
-                li.classList.remove('active');
-            });
-            this.classList.add('active');
-        });
-    });
-    
-    // Formulario de producto
-    document.getElementById('productForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        addProduct();
-    });
-    
-    // Vista previa de imagen
-    document.getElementById('productImage').addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                const preview = document.getElementById('imagePreview');
-                preview.innerHTML = `<img src="${event.target.result}" alt="Vista previa">`;
-            };
-            reader.readAsDataURL(file);
-        }
-    });
-    
-    // Botón de búsqueda
-    document.querySelector('.btn-search').addEventListener('click', searchProduct);
-    
-    // Exportar a Excel
-    document.getElementById('exportExcel').addEventListener('click', exportToExcel);
-    
-    // Buscar al presionar Enter
-    document.getElementById('searchInput').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            searchProduct();
-        }
-    });
-    
-    // Generar reporte
-    document.getElementById('generateReport').addEventListener('click', generateSalesReport);
-    
-    // Configuración - Copia de seguridad
-    document.getElementById('exportBackup').addEventListener('click', exportBackup);
-    document.getElementById('importBackup').addEventListener('click', () => {
-        document.getElementById('backupFile').click();
-    });
-    document.getElementById('backupFile').addEventListener('change', importBackup);
-    document.getElementById('clearData').addEventListener('click', confirmClearData);
-}
-
-function showSection(sectionId) {
-    // Ocultar todas las secciones
-    document.querySelectorAll('.section').forEach(section => {
-        section.classList.remove('active');
-    });
-    
-    // Mostrar la sección seleccionada
-    document.getElementById(`${sectionId}-section`).classList.add('active');
-    
-    // Actualizar el título del encabezado
-    const headerTitle = document.querySelector('header h1');
-    switch(sectionId) {
-        case 'inventory':
-            headerTitle.innerHTML = '<i class="fas fa-box-open"></i> Gestión de Inventario';
-            break;
-        case 'reports':
-            headerTitle.innerHTML = '<i class="fas fa-chart-line"></i> Reportes de Ventas';
-            loadSalesData(); // Cargar datos de ventas al mostrar la sección
-            break;
-        case 'settings':
-            headerTitle.innerHTML = '<i class="fas fa-cog"></i> Configuración del Sistema';
-            loadSettings(); // Cargar configuración al mostrar la sección
-            break;
-    }
-}
-
 function generateSalesReport() {
     const dateFrom = document.getElementById('reportDateFrom').value;
     const dateTo = document.getElementById('reportDateTo').value;
@@ -666,70 +582,33 @@ function saveSettings() {
     const settings = {
         companyName: document.getElementById('companyName').value || ''
     };
-    function addProduct() {
-    // Deshabilitar el botón de submit
-    const submitButton = document.querySelector('#productForm button[type="submit"]');
-    submitButton.disabled = true;
-    
-    const name = document.getElementById('productName').value.trim();
-    const quantity = parseInt(document.getElementById('productQuantity').value);
-    const cost = parseFloat(document.getElementById('productCost').value);
-    const price = parseFloat(document.getElementById('productPrice').value);
-    const category = document.getElementById('productCategory').value.trim();
-    const imageFile = document.getElementById('productImage').files[0];
-    
-    if (!name || isNaN(quantity) || isNaN(cost) || isNaN(price)) {
-        showAlert('Por favor complete todos los campos requeridos correctamente.', 'error');
-        submitButton.disabled = false;
-        return;
-    }
-    
-    processImage(imageFile).then(imageData => {
-        const product = {
-            id: Date.now(),
-            name,
-            quantity,
-            cost,
-            price,
-            category: category || 'Sin categoría',
-            totalCost: quantity * cost,
-            totalPrice: quantity * price,
-            profit: quantity * (price - cost),
-            image: imageData || null,
-            createdAt: new Date().toISOString()
-        };
-        
-        let inventory = getInventory();
-        const existingProductIndex = inventory.findIndex(p => p.name.toLowerCase() === name.toLowerCase());
-        
-        if (existingProductIndex >= 0) {
-            // Solo actualizar, no agregar nuevo
-            inventory[existingProductIndex].quantity += quantity;
-            inventory[existingProductIndex].totalCost = inventory[existingProductIndex].quantity * cost;
-            inventory[existingProductIndex].totalPrice = inventory[existingProductIndex].quantity * price;
-            inventory[existingProductIndex].profit = inventory[existingProductIndex].quantity * (price - cost);
-            
-            if (imageData) {
-                inventory[existingProductIndex].image = imageData;
-            }
-            
-            showAlert('Producto actualizado correctamente', 'success');
-        } else {
-            // Agregar nuevo producto
-            inventory.push(product);
-            showAlert('Producto agregado correctamente', 'success');
-        }
-        
-        saveInventory(inventory);
-        loadInventory();
-        updateFinancialSummary();
-        resetForm();
-        submitButton.disabled = false;
-    }).catch(error => {
-        showAlert('Error al procesar la imagen: ' + error.message, 'error');
-        submitButton.disabled = false;
-    });
-}
     localStorage.setItem('settings', JSON.stringify(settings));
 }
 
+function getInventory() {
+    return JSON.parse(localStorage.getItem('inventory')) || [];
+}
+
+function saveInventory(inventory) {
+    localStorage.setItem('inventory', JSON.stringify(inventory));
+}
+
+function resetForm() {
+    document.getElementById('productForm').reset();
+    document.getElementById('imagePreview').innerHTML = '';
+    document.getElementById('productName').focus();
+}
+
+function showAlert(message, type) {
+    // Implementación básica de alerta
+    alert(`${type.toUpperCase()}: ${message}`);
+}
+
+// Protección contra eliminación accidental
+window.addEventListener('storage', function(e) {
+    if (e.key === 'inventory' && !confirm('Se detectaron cambios en el inventario desde otra pestaña. ¿Deseas recargar los datos?')) {
+        // Restaurar el inventario anterior
+        localStorage.setItem('inventory', e.oldValue);
+    }
+    loadInventory();
+});
